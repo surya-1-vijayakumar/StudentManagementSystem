@@ -1,13 +1,13 @@
 
 using System.Text;
+using System.Security.Claims;
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 
-using StudentManagementApi.Authorization;
 using StudentManagementApi.Data;
 using StudentManagementApi.Middlewares;
 using StudentManagementApi.Models;
@@ -18,24 +18,20 @@ using StudentManagementApi.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Database connection
+// Database
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection")
     )
 );
 
-// 2. Repository registration
+// Dependency Injection
 builder.Services.AddScoped<IStudentRepository, StudentRepository>();
-
-// 3. Service registration
 builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddScoped<TokenService>();
-
-// 4. Password hashing
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
-// 5. JWT configuration
+// JWT Configuration
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("JWT Key is missing.");
 
@@ -45,48 +41,47 @@ var jwtAudience = builder.Configuration["Jwt:Audience"];
 if (Encoding.UTF8.GetByteCount(jwtKey) < 32)
 {
     throw new InvalidOperationException(
-        "JWT Key must contain at least 32 bytes.");
+        "JWT Key must contain at least 32 bytes."
+    );
 }
 
-// 6. Authentication
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme =
-        JwtBearerDefaults.AuthenticationScheme;
-
-    options.DefaultChallengeScheme =
-        JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
+// Authentication
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtIssuer,
-        ValidAudience = jwtAudience,
-        IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(jwtKey)
-        ),
-        ClockSkew = TimeSpan.FromMinutes(1)
-    };
-});
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
 
-// 7. Admin authorization
-builder.Services.AddSingleton<AdminOnlyHandler>();
+            ValidIssuer = jwtIssuer,
+            ValidAudience = jwtAudience,
 
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwtKey)
+            ),
+
+            NameClaimType = ClaimTypes.Name,
+            RoleClaimType = ClaimTypes.Role,
+
+            ClockSkew = TimeSpan.FromMinutes(1)
+        };
+    });
+
+// Authorization
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", policy =>
     {
         policy.RequireAuthenticatedUser();
-        policy.Requirements.Add(new AdminOnlyRequirement());
+        policy.RequireRole("Admin");
     });
 });
 
-// 8. CORS for Angular
+// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AngularClient", policy =>
@@ -97,10 +92,11 @@ builder.Services.AddCors(options =>
     });
 });
 
-// 9. Controllers and Swagger
+// Controllers
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
+// Swagger with JWT Authentication
 builder.Services.AddSwaggerGen(options =>
 {
     options.AddSecurityDefinition("Bearer",
@@ -111,40 +107,36 @@ builder.Services.AddSwaggerGen(options =>
             Scheme = "bearer",
             BearerFormat = "JWT",
             In = ParameterLocation.Header,
-            Description = "Enter your JWT token."
+            Description = "Enter your JWT token without the Bearer prefix."
         });
 
     options.AddSecurityRequirement(document =>
         new OpenApiSecurityRequirement
         {
-            [new OpenApiSecuritySchemeReference("Bearer", document)] =
-                new List<string>()
+            [new OpenApiSecuritySchemeReference("Bearer", document)] = []
         });
 });
 
-// 10. Build application
+// Build Application
 var app = builder.Build();
 
-// 11. Exception handling
+// Middleware
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-// 12. Swagger
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-// 13. HTTP pipeline
 app.UseHttpsRedirection();
 
 app.UseCors("AngularClient");
 
 app.UseAuthentication();
+
 app.UseAuthorization();
 
-// 14. Map controllers
 app.MapControllers();
 
-// 15. Start application
 app.Run();
