@@ -1,0 +1,12 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# .NET build files
+bin/
+obj/
+
+# Application configuration
+StudentManagementAPI/appsettings.json
+StudentManagementAPI/appsettings.Development.json
