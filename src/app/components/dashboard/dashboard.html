@@ -1,1 +1,65 @@
-<p>dashboard works!</p>
+
+<div class="dashboard-container">
+
+  <aside class="sidebar">
+    <div class="brand">
+      🎓 Student Management
+    </div>
+
+    <nav>
+      <a routerLink="/dashboard" class="nav-item active">
+        <span>🏠</span> Dashboard
+      </a>
+
+      <a routerLink="/students" class="nav-item">
+        <span>👨‍🎓</span> Students
+      </a>
+    </nav>
+
+    <button class="logout-button" (click)="logout()">
+      🚪 Logout
+    </button>
+  </aside>
+
+  <main class="main-content">
+
+    <header class="topbar">
+      <div>
+        <h2>Dashboard</h2>
+        <p>Student Management System</p>
+      </div>
+
+      <div class="profile">
+        <div class="avatar">{{ userName.charAt(0).toUpperCase() }}</div>
+        <div>
+          <strong>{{ userName }}</strong>
+          <small>{{ userRole }}</small>
+        </div>
+      </div>
+    </header>
+
+    <section class="welcome-section">
+      <h1>Welcome back, {{ userName }}! 👋</h1>
+      <p>Manage your student information from one place.</p>
+    </section>
+
+    <section class="info-grid">
+
+      <div class="info-card">
+        <div class="card-icon">🎓</div>
+        <h3>Student Management</h3>
+        <p>View and manage student records.</p>
+        <a routerLink="/students">Manage Students →</a>
+      </div>
+
+      <div class="info-card">
+        <div class="card-icon">👤</div>
+        <h3>Account Details</h3>
+        <p>{{ userEmail }}</p>
+        <span class="role-badge">{{ userRole }}</span>
+      </div>
+
+    </section>
+
+  </main>
+</div>

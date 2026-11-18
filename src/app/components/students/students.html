@@ -1,1 +1,191 @@
-<p>students works!</p>
+
+<div class="students-page">
+
+  <div class="page-header">
+    <div>
+      <h1>Student Management</h1>
+      <p>Manage your student records</p>
+    </div>
+    <span class="student-count">
+      Total Students: {{ students.length }}
+    </span>
+  </div>
+
+  <!-- Success and Error Messages -->
+  <div class="alert success" *ngIf="successMessage">
+    {{ successMessage }}
+  </div>
+
+  <div class="alert error" *ngIf="errorMessage">
+    {{ errorMessage }}
+  </div>
+
+  <!-- Student Form -->
+  <section class="form-card">
+    <h2>{{ isEditing ? 'Edit Student' : 'Add New Student' }}</h2>
+
+    <form (ngSubmit)="saveStudent()" #studentFormRef="ngForm">
+
+      <div class="form-grid">
+
+        <div class="form-group">
+          <label for="name">Student Name</label>
+          <input
+            id="name"
+            type="text"
+            name="name"
+            [(ngModel)]="studentForm.name"
+            placeholder="Enter student name"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input
+            id="email"
+            type="email"
+            name="email"
+            [(ngModel)]="studentForm.email"
+            placeholder="Enter email address"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="department">Department</label>
+          <input
+            id="department"
+            type="text"
+            name="department"
+            [(ngModel)]="studentForm.department"
+            placeholder="Enter department"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="age">Age</label>
+          <input
+            id="age"
+            type="number"
+            name="age"
+            [(ngModel)]="studentForm.age"
+            min="17"
+            max="60"
+            required
+          />
+        </div>
+
+      </div>
+
+      <div class="form-actions">
+        <button
+          type="submit"
+          class="btn primary"
+          [disabled]="studentFormRef.invalid"
+        >
+          {{ isEditing ? 'Update Student' : 'Add Student' }}
+        </button>
+
+        <button
+          *ngIf="isEditing"
+          type="button"
+          class="btn secondary"
+          (click)="cancelEdit()"
+        >
+          Cancel
+        </button>
+      </div>
+
+    </form>
+  </section>
+
+  <!-- Search Section -->
+  <section class="table-card">
+
+    <div class="table-header">
+      <h2>Students List</h2>
+
+      <div class="search-box">
+        <input
+          type="text"
+          [(ngModel)]="searchText"
+          placeholder="Search students..."
+          (keyup.enter)="searchStudents()"
+        />
+
+        <button class="btn primary" (click)="searchStudents()">
+          Search
+        </button>
+
+        <button
+          class="btn secondary"
+          (click)="searchText = ''; loadStudents()"
+        >
+          Clear
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div class="loading" *ngIf="isLoading">
+      Loading students...
+    </div>
+
+    <!-- Students Table -->
+    <div class="table-responsive" *ngIf="!isLoading">
+
+      <table *ngIf="students.length > 0; else noStudents">
+
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Department</th>
+            <th>Age</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let student of students">
+            <td>{{ student.id }}</td>
+            <td>{{ student.name }}</td>
+            <td>{{ student.email }}</td>
+            <td>{{ student.department }}</td>
+            <td>{{ student.age }}</td>
+
+            <td class="actions">
+              <button
+                class="btn edit"
+                (click)="editStudent(student)"
+              >
+                Edit
+              </button>
+
+              <button
+                class="btn delete"
+                (click)="deleteStudent(student.id)"
+              >
+                Delete
+              </button>
+            </td>
+          </tr>
+        </tbody>
+
+      </table>
+
+      <ng-template #noStudents>
+        <div class="empty-state">
+          <h3>No students found</h3>
+          <p>Add a student or change your search.</p>
+        </div>
+      </ng-template>
+
+    </div>
+
+  </section>
+
+</div>
