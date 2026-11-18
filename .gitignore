@@ -1,4 +1,18 @@
+# Angular
 node_modules/
 dist/
 .angular/
 .vscode/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# .NET build files
+**/bin/
+**/obj/
+
+# Application configuration - protect secrets
+**/appsettings.json
+**/appsettings.Development.json
